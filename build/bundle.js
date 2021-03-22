@@ -1,1 +1,1 @@
-console.log(123132);
+(()=>{"use strict";console.log(123),console.log("slider"),console.log(3333)})();
