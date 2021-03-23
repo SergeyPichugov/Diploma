@@ -187,7 +187,6 @@ const valid = () => {
          regNumder(event);
 
          if (target.value.length < 7) {
-            console.log(target);
             target.setCustomValidity('минимум 7 цифр');
          } else {
             target.setCustomValidity('');
@@ -218,3 +217,159 @@ const valid = () => {
 };
 
 valid();
+
+
+
+// калькулятор
+
+const calck = () => {
+   const form = document.getElementById('card_order'),
+         time = document.querySelectorAll('.time input'),
+         club = form.querySelectorAll('.club input'),
+         promo = document.querySelector('.price input'),
+         totalValue = document.getElementById('price-total');
+
+         
+   const sum = () => {
+      
+      let month = 1;
+      let promoCode = 1;
+      
+      let url = '';
+
+      club.forEach(item => {
+         if (item.checked) {
+            url = item.value;
+         }
+      });
+
+      const totalSum = (data) => {
+
+         let priceMonth = 1;
+
+         const moz = document.createElement('div');
+         moz.innerHTML = data;
+         const tmp = moz.querySelectorAll('.cards-types input');
+         const tmpPrice = moz.querySelectorAll('.cards-types .cost');
+
+         time.forEach((item, i) => {
+            if (item.checked) {
+               month = item.value;
+            }
+         });
+
+         tmp.forEach((elem, i) => {
+            if (elem.value === `${month}s`) {
+               priceMonth = parseInt(tmpPrice[i].textContent);
+            }
+         });
+
+         if (promo && promo.value === 'ТЕЛО2020') {
+            promoCode = 0.7;
+         }
+
+         let total = Math.floor(priceMonth * promoCode);
+
+         totalValue.textContent = total;
+
+      };
+
+
+      fetch(`/${url}.html`)
+         .then((response) => {
+
+            if (response.status !== 200) {
+               throw new Error('status network not 200');
+            }
+            return (response.text());
+         })
+         .then((data) => {
+            totalSum(data);
+         })
+         .catch((error) => console.error(error));
+      
+   };
+
+
+   form.addEventListener('input', () => {
+
+      if (totalValue) {
+         sum();
+      }
+
+   });
+
+};
+
+calck();
+
+
+
+//стрелка наверх
+
+const arrow = () => {
+   const totop = document.getElementById('totop');
+   totop.style.display = 'none';
+
+   window.addEventListener('scroll', function () {
+      const height = document.documentElement.scrollTop;
+      const header = document.querySelector('.header-main').offsetHeight;
+
+      if (height < header){
+         totop.style.display = 'none';
+      } else {
+         totop.style.display = 'block';
+      }
+   });
+};
+
+arrow();
+
+
+// бургер меню
+const burgerMenu = () => {
+   const menuButton = document.querySelector('.top-menu');
+   let top = document.querySelector('.head-main').getBoundingClientRect().height;
+
+   window.addEventListener('scroll', function () {
+
+      if (menuButton.scrollWidth < 768){
+   
+         if (top < window.pageYOffset) {
+            menuButton.style.position = 'fixed';
+         }
+   
+         if (top > window.pageYOffset) {
+            menuButton.style.position = '';
+         }
+
+      } else {
+         menuButton.style.position = '';
+      }
+   });
+
+};
+
+burgerMenu();
+
+
+
+// меню в бургер меню
+const menuInBurger = () => {
+   const popupMenu = document.querySelector('.popup-menu');
+   
+   document.addEventListener('click', (event) => {
+      let target = event.target;
+
+      if(target.closest('.top-menu img')){
+         popupMenu.style.display = 'flex';
+      }
+      
+      if (target.closest('.close-menu-btn') || target.closest('.scroll')) {
+         popupMenu.style.display = 'none';
+      }
+   });
+
+};
+
+menuInBurger();
