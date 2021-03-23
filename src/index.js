@@ -2,13 +2,13 @@
 
 
 // выпадение popUp
-
 const changeClub = () => {
    const menu = document.querySelector('.clubs-list ul'),
          popUp = document.getElementById('free_visit_form'),
          callbackForm = document.getElementById('callback_form'),
          fixedGift = document.querySelector('.fixed-gift'),
-         gift = document.getElementById('gift');
+         gift = document.getElementById('gift'),
+         modalThanks = document.getElementById('thanks');
 
 
    // плавное перемещение к меню
@@ -33,7 +33,6 @@ const changeClub = () => {
 
    document.addEventListener('click', (e) => {
       let target = e.target;
-      console.log('target: ', target);
 
       if (target.closest('.clubs-list')){
          toggle();
@@ -50,10 +49,13 @@ const changeClub = () => {
       if (target.closest('.close_icon') || target.closest('.overlay') || target.closest('.close-btn')) {
          popUp.style.display = 'none';
          callbackForm.style.display = 'none';
-         gift.style.display = 'none';
+         modalThanks.style.display = 'none';
+         if (gift){
+            gift.style.display = 'none';
+         }
       }
 
-      if (target.closest('.callback-btn')){
+      if (target.closest('.callback-btn') && target.closest('.head-main')) {
          callbackForm.style.display = 'block';
       }
 
@@ -66,3 +68,153 @@ const changeClub = () => {
 };
 
 changeClub();
+
+
+// ajax
+const sendForm = () => {
+   const modalThanks = document.getElementById('thanks'),
+         formContent = modalThanks.querySelector('.form-content p'),
+         bodyTag = document.querySelector('body'),
+         statusMessage = document.createElement('div');
+
+   statusMessage.style.cssText = 'font-size: 2rem';
+
+
+   const statusImg = document.createElement('img');
+   statusImg.src = './images/294.svg';
+
+   const clearInput = (formClear) => {
+      const formInrut = formClear.querySelectorAll('input');
+      formInrut.forEach((item, i) => {
+         if (formClear.querySelector('[name="phone"]') === item || formClear.querySelector('[name="name"]') === item) {
+            item.value = '';
+         }
+
+         if (formClear.querySelector('[type="checkbox"]') === item || formClear.querySelectorAll('[name="club-name"]')[i] === item) {
+            item.checked = false;
+         }
+      });
+   };
+
+   const closeModal = () => {
+      const popUp = document.getElementById('free_visit_form'),
+            callbackForm = document.getElementById('callback_form');
+      popUp.style.display = 'none';
+      callbackForm.style.display = 'none';
+   };
+
+   const postData = (body) => {
+      return fetch('./server.php', {
+         method: 'POST',
+         headers: {
+            'Content-Type': 'application/json'
+         },
+         body: JSON.stringify(body)
+      });
+   };
+
+   const statusMessageModal = () => {
+      modalThanks.style.display = 'block';
+   };
+
+   bodyTag.addEventListener('submit', (event) => {
+      event.preventDefault();
+      let target = event.target;
+
+      if (target.querySelector('[name="phone"]').value.length < 7 ){
+         return;
+      }
+
+      target.appendChild(statusMessage);
+      statusMessage.appendChild(statusImg);
+
+      const formData = new FormData(target);
+      let body = {};
+      formData.forEach((val, key) => {
+         body[key] = val;
+      });
+
+
+      postData(body)
+         .then((response) => {
+            if (response.status !== 200) {
+               throw new Error('status network not 200');
+            }
+            closeModal();
+            statusMessageModal();
+            statusMessage.textContent = '';
+            setTimeout(() => modalThanks.style.display = 'none', 4000);
+         })
+         .catch(error => {
+            statusMessageModal();
+            formContent.innerHTML = 'но что-то пошло не так...';
+            statusMessage.textContent = '';
+            console.error(error);
+         });
+
+      clearInput(target);
+   });
+};
+
+sendForm();
+
+
+// валидация
+const valid = () => {
+   const regNumder = (btn) => {
+      if (!/[+\d]/ig.test(btn.data)) {
+         btn.target.value = btn.target.value.replace(/[^+\d]/ig, '');
+      }
+
+      btn.target.value = btn.target.value.replace(/(.{12}).*/ig, '$1');
+
+      if (/^[78]/ig.test(btn.target.value)) {
+         btn.target.value = btn.target.value.replace(/[+]/ig, '');
+         btn.target.value = btn.target.value.replace(/([\d]{11})\d*/ig, '$1');
+      }
+   };
+
+   const regName = (btn) => {
+      if (!/[а-я\s]/ig.test(btn.data)) {
+         btn.target.value = btn.target.value.replace(/[^а-я\s]/ig, '');
+      }
+   };
+
+   document.addEventListener('input', (event) => {
+      let target = event.target;
+
+      if (target.type === 'tel'){
+         regNumder(event);
+
+         if (target.value.length < 7) {
+            console.log(target);
+            target.setCustomValidity('минимум 7 цифр');
+         } else {
+            target.setCustomValidity('');
+         }
+      }
+
+      if (target.name === 'name'){
+         regName(event);
+      }
+   });
+
+
+   //проверка checkbox
+   document.addEventListener('click', (event) => {
+      let target = event.target;
+      
+      if (target.name === 'send' || target.name === 'send1' || target.matches('.card-order-btn')) {
+         let check = target.closest('form').querySelector('[type="checkbox"]');
+
+         if (!check.checked){
+            target.setCustomValidity('необходимо подтвердить согласие на обработку персональных данных');
+         } else {
+            target.setCustomValidity('');
+         }
+      }
+   });
+
+};
+
+valid();
