@@ -33,6 +33,14 @@ const valid = () => {
 
       if (target.name === 'name') {
          regName(event);
+
+         if (target.value.length < 2) {
+            target.setCustomValidity('слишком короткое имя');
+         } else if (target.value.length > 16) {
+            target.setCustomValidity('слишком длинное имя');
+         } else {
+            target.setCustomValidity('');
+         }
       }
    });
 
